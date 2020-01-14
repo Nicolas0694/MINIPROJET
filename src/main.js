@@ -3,10 +3,12 @@ import App from './App.vue'
 import VueMaterial from 'vue-material'
 import 'vue-material/dist/vue-material.min.css'
 import 'vue-material/dist/theme/default.css'
+import 'bootstrap/dist/css/bootstrap.css'
 import VueRouter from 'vue-router'
 import Restaurants from "./components/Restaurants.vue";
 import RestaurantDetail from "./components/RestaurantDetail.vue";
 import HelloWorld from "./components/HelloWorld.vue";
+require('../node_modules/bootstrap/dist/css/bootstrap.css');
 
 // configs...
 Vue.use(VueMaterial)
@@ -25,6 +27,7 @@ const router = new VueRouter({
     },
     { 
       path: '/restaurants', 
+      name:'Restaurants',
       component: Restaurants 
     },
     { 

@@ -160,7 +160,6 @@ app.put('/api/restaurants/:id', multerData.fields([]), function(req, res) {
 // c'est le standard REST
 app.delete('/api/restaurants/:id', function(req, res) {
 	var id = req.params.id;
-
  	mongoDBModule.deleteRestaurant(id, function(data) {
  		res.send(JSON.stringify(data)); 
  	});

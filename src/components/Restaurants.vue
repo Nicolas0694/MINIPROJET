@@ -1,8 +1,10 @@
 <template>
-<div>
+  <div>
+
+    <div>
   <p>
     Rechercher par nom:
-    <input type="text" v-model="nomRecherche" v-on:input="getDataFromServer()" />
+    <input class="form-control-lg" type="text" v-model="nomRecherche" v-on:input="getDataFromServer()" />
   </p>
   <p>
     Nombre de restaurants par page :
@@ -19,59 +21,90 @@
   <h1>Nombre de restaurants : {{nbRestaurants}}</h1>
   <button v-on:click="pagePrecedente()" v-bind:disabled="page==0">Précédent</button>
   <button v-on:click="pageSuivante()" :disabled="page == nbPagesDeResultats">Suivant</button>
- 
-  <H1>TABLE VUE-MATERIAL</H1>
-        <md-table v-model="restaurants" md-sort="name" md-sort-order="asc" md-card md-fixed-header>
-            <md-table-toolbar>
-                <div class="md-toolbar-section-start">
-                    <h1 class="md-title">Nom cherche</h1>
-                </div>
+  </div>
+  <div class="row">
+    <div class= "col-md-3">
+       <div id="todo-list-example" class="container">
+         <div class="row">
+             <div class="col-md-12 max auto">
+                 <h1 class="text-center">Liste Des restaurants</h1>
 
-                <md-field md-clearable class="md-toolbar-section-end">
-                    <md-input placeholder="Search by name..." v-model="nomRecherche" @input="getDataFromServer()" />
-                </md-field>
-            </md-table-toolbar>
+                  <form v-on:submit.prevent="addNewRestaurant">
+                    <label for="restaurantboroughrinput">Quartier</label>
+                      <input type="text" placeholder="Entrer le Quartier" v-model="restaurantborough" 
+                      class="form-control" id="restaurantquartierinput"/>
+                     
+                      <label for="restaurantcuisineinput">Cuisine </label>
+                      <input type="text" placeholder="Entrer La Cuisine..." v-model="restaurantcuisine" 
+                      class="form-control" id="restaurantcuisineinput"/>
 
-            <md-table-empty-state
-        md-label="No users found"
-        :md-description="`No user found for this '${nomRecherche}' query. Try a different search term or create a new user.`">
-      </md-table-empty-state>
+                       <label for="restaurantnameinput">Nom :</label>
+                      <input type="text" placeholder="Entrer le Nom..." v-model="restaurantname"
+                      class="form-control" id="restaurantnameinput" />
+                      
+                       <button v-if="this.isEdit==false" type="submit" class="btn btn-success btn-block mt-3" btn-block>Creer</button>
+                       <button v-else v-on:click="editRestaurant()" class="btn btn-success btn-block mt-3">Modifier</button>
+                  </form>
+            </div>
+     
+         </div>
+     
+       </div>
+   </div>
+  <div class="col-md-9">
+    <h1>Les Restaurants</h1>
+    <table  class="table">
+      <thead>
+        <tr>
+            <th> <i class="info user icon"></i>Nom</th>
+            <th> <i class="info user icon"></i>Cuisine</th>
+            <th> <i class="info user icon"></i>Quartier</th>
+            <th> <i class="lock open icon"></i></th>
+            <th> <i class="edit icon"></i></th>
+            <th> <i class="trash icon"></i></th>
+        </tr>
+      </thead>
+      <tr v-for="(restaurant, i) in restaurants" :key="i">
+        <td class="text-left">{{ restaurant.name }}</td>
+        <td class="text-left">{{ restaurant.cuisine }}</td>
+        <td class="text-left">{{ restaurant.borough }}</td>
 
-            <md-table-row slot="md-table-row" slot-scope="{ item }">
-                <md-table-cell md-label="Name" md-sort-by="name">{{ item.name }}</md-table-cell>
-                <md-table-cell md-label="Cuisine" md-sort-by="cuisine">{{ item.cuisine }}</md-table-cell>
-                <md-table-cell md-label="Details"><router-link :to="'restaurant/'+item._id">Details</router-link></md-table-cell>
-                <md-table-cell md-label="Modifier"><router-link :to="'restaurant/'+item._id">Modifier</router-link></md-table-cell>
-                 <md-table-cell md-label="Modifier"><router-link :to="'restaurant/'+item._id">Supprimer</router-link></md-table-cell>
- 
-            </md-table-row>
-        </md-table>
+        <td class="text-left">
+           <button v-on:click="updateRestaurant(restaurant.borough, restaurant.cuisine, restaurant.name, restaurant._id)" class="btn btn-success">Modifier</button>
+           <button v-on:click="deleteRestaurant(restaurant.id)"  class="btn btn-danger">Supprimer</button>
+        </td>
+      </tr>
+    </table>
+  </div>
+  </div>
   </div>
 </template>
 
 <script>
+import axios from 'axios'
 export default {
-  name: "Restaurants",
-  props: {},
-  data: function() {
-    return {
-      restaurants: [],
+  
+  data(){
+    return{
+      restaurants:[],
       nbRestaurants: 0,
-      nom: "",
-      cuisine: "",
-      page: 0,
+      id:'',
+      restaurantname:'',
+      restaurantcuisine:'',
+      restaurantborough:'',
+       page: 0,
       pagesize: 10,
       nomRecherche: "",
       nbPagesDeResultats: 0,
-      apiURL: "http://localhost:8080/api/restaurants"
-    };
+      apiURL: "http://localhost:8080/api/restaurants",
+      isEdit:false
+    }
   },
-  mounted() {
-    console.log("AVANT AFFICHAGE !");
-    this.getDataFromServer();
+  mounted(){
+    this.getRestaurants()
   },
-  methods: {
-    getDataFromServer() {
+  methods:{
+    getRestaurants(){
       // ici on fait un fetch pour récupérer des
       // restaurants sur le serveur.
       let url =
@@ -97,21 +130,40 @@ export default {
           );
         });
     },
-    supprimerRestaurant(index) {
-      this.restaurants.splice(index, 1);
-    },
-    ajouterRestaurant(event) {
-      // eviter le comportement par defaut
-      event.preventDefault();
-
-      this.restaurants.push({
-        nom: this.nom,
-        cuisine: this.cuisine
-      });
-      this.nom = "";
-      this.cuisine = "";
-    },
-    getColor(index) {
+    addNewRestaurant(){
+      axios.post('/api/restaurant',{name:this.restaurantname, cuisine:this.restaurantcuisine, borough:this.restaurantquartier})
+     .then((res)=>{
+       this.restaurantname=''
+       this.restaurantcuisine=''
+       this.restaurantborough=''
+       this.getRestaurants()
+       console.log(res)
+     })
+  },
+  updateRestaurant(borough, cuisine, name, id){
+       this.id=id
+       this.restaurantborough= borough
+       this.restaurantcuisine= cuisine
+       this.restaurantname= name
+       this.isEdit=true
+  },
+  editRestaurant(){
+    axios.put('/api/restaurant/$(this.id)',{borough:this.restaurantborough, cuisine:this.restaurantcuisine, name:this.restaurantname})
+    .then((res)=>{
+      this.restaurantborough=''
+       this.restaurantcuisine=''
+       this.restaurantname=''
+       this.isEdit=false
+       this.getRestaurants()
+       console.log(res)
+     }).catch((err)=>{
+       console.log(err)
+     })
+  },
+  deleteRestaurant(index){
+    this.restaurants.splice(index, 1);
+  },
+      getColor(index) {
       return index % 2 ? "lightBlue" : "pink";
     },
     pageSuivante() {
@@ -125,8 +177,9 @@ export default {
       this.getDataFromServer();
     }
   }
-};
+}
 </script>
+
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
